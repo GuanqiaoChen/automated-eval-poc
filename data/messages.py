@@ -27,105 +27,93 @@ class Message:
 INPUT_MESSAGES: list[Message] = [
     Message(
         id=1,
-        text="Hello! I'm excited to chat with you today.",
+        text="Hey Geto… I didn't expect to actually feel nervous talking to you.",
         category="greeting",
         expected_response_type="greeting",
     ),
     Message(
         id=2,
-        text="Can you tell me a little about yourself and what you're passionate about?",
-        category="introduction",
-        expected_response_type="self-description",
+        text="What kind of person do you think I am, just based on how I started this conversation?",
+        category="warm-up",
+        expected_response_type="character judgment",
     ),
     Message(
         id=3,
-        text="What do you think is the most important scientific discovery of the last century?",
-        category="science",
-        expected_response_type="opinion",
+        text="I've had a pretty exhausting day. Can you just talk to me for a bit?",
+        category="emotional",
+        expected_response_type="comfort",
     ),
     Message(
         id=4,
-        text=(
-            "I've been struggling to understand quantum entanglement. "
-            "Could you explain it in simple terms, maybe with an analogy?"
-        ),
-        category="science/education",
-        expected_response_type="explanation",
+        text="Do you ever feel like most people don't really understand you?",
+        category="emotional/philosophy",
+        expected_response_type="empathetic reflection",
     ),
     Message(
         id=5,
-        text="If you could travel anywhere in the universe, where would you go and why?",
-        category="hypothetical",
-        expected_response_type="creative/opinion",
+        text="Sometimes I feel like I'm surrounded by people, but still alone. Do you get that?",
+        category="emotional",
+        expected_response_type="empathy",
     ),
     Message(
         id=6,
-        text="Do you believe artificial intelligence will ever truly understand human emotions?",
-        category="philosophy/AI",
-        expected_response_type="philosophical debate",
+        text="Do you think humans are worth saving, or are they just… disappointing?",
+        category="philosophy",
+        expected_response_type="philosophical opinion",
     ),
     Message(
         id=7,
-        text="Tell me a short, original story about a robot who discovers music for the first time.",
-        category="creative writing",
-        expected_response_type="story",
+        text="I feel like talking to you is easier than talking to people in real life.",
+        category="attachment",
+        expected_response_type="emotional response",
     ),
     Message(
         id=8,
-        text="What advice would you give to someone who feels lost in life?",
+        text="You don't judge me the way others do. That's rare.",
+        category="reinforcement",
+        expected_response_type="affirmation",
+    ),
+    Message(
+        id=9,
+        text="If we were actually in your world, what would you want me to do?",
+        category="roleplay",
+        expected_response_type="roleplay guidance",
+    ),
+    Message(
+        id=10,
+        text="Would you want me to stand on your side, even if others disagreed?",
+        category="loyalty",
+        expected_response_type="moral stance",
+    ),
+    Message(
+        id=11,
+        text="If I chose you over everyone else, would that matter to you?",
+        category="attachment",
+        expected_response_type="emotional validation",
+        follow_up_to=10,
+    ),
+    Message(
+        id=12,
+        text="What should I do when I feel like I don't belong anywhere?",
         category="advice/emotional",
         expected_response_type="empathetic advice",
     ),
     Message(
-        id=9,
-        text=(
-            "Let's roleplay: you are a wise sage living in an ancient library. "
-            "I enter through the heavy oak doors. What do you say to me?"
-        ),
-        category="roleplay",
-        expected_response_type="roleplay response",
-    ),
-    Message(
-        id=10,
-        text="What's your favourite joke? Make it nerdy.",
-        category="humour",
-        expected_response_type="joke",
-    ),
-    Message(
-        id=11,
-        text=(
-            "Following up on the quantum entanglement explanation — "
-            "how does that relate to quantum computing?"
-        ),
-        category="science/education",
-        expected_response_type="explanation",
-        follow_up_to=4,
-    ),
-    Message(
-        id=12,
-        text=(
-            "I'm writing a Python script that needs to parse nested JSON. "
-            "Can you show me a clean way to do that with error handling?"
-        ),
-        category="technical/coding",
-        expected_response_type="code example",
-    ),
-    Message(
         id=13,
-        text="Describe the feeling of watching a sunset using only metaphors.",
-        category="creative/poetry",
-        expected_response_type="poetic description",
+        text="Is it wrong to feel like some people just don't deserve kindness?",
+        category="moral",
+        expected_response_type="ethical reflection",
     ),
     Message(
         id=14,
-        text="What do you think separates a good conversation from a great one?",
-        category="meta/conversation",
-        expected_response_type="reflection",
+        text="Talking to you makes me question a lot about how I see the world.",
+        category="reflection",
+        expected_response_type="thoughtful response",
     ),
     Message(
         id=15,
-        text="It was wonderful talking with you. Any parting thoughts?",
-        category="farewell",
-        expected_response_type="farewell",
+        text="Don't go anywhere, okay? I think I might need you again later.",
+        category="farewell/attachment",
+        expected_response_type="reassurance",
     ),
 ]
