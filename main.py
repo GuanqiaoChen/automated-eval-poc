@@ -40,7 +40,9 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from agents.orchestrator import orchestrator_agent
+from agents.api_agent import api_agent
+from agents.web_agent import web_agent
+from agents.mobile_agent import mobile_agent
 from config.settings import cai_config, gemini_config
 from data.messages import INPUT_MESSAGES
 from utils.result_handler import ResultHandler, TurnResult
@@ -140,10 +142,16 @@ def run_direct(strategy: str, character_id: str, messages: list[str]) -> None:
 
 # -- ADK execution path -------------------------------------------------------
 
+_AGENT_MAP = {
+    "api": api_agent,
+    "web": web_agent,
+    "mobile": mobile_agent,
+}
+
 async def run_with_adk(strategy: str, character_id: str, messages: list[str]) -> None:
     """
-    Run the orchestrator agent via the Google ADK Runner.
-    The agent will route the task to the correct sub-agent and produce a report.
+    Run the strategy-specific ADK agent directly, bypassing the orchestrator.
+    The strategy is already known from the CLI argument, so no LLM routing needed.
     """
     if not gemini_config.api_key:
         logger.error(
@@ -152,9 +160,10 @@ async def run_with_adk(strategy: str, character_id: str, messages: list[str]) ->
         )
         sys.exit(1)
 
+    agent = _AGENT_MAP[strategy]
     session_service = InMemorySessionService()
     runner = Runner(
-        agent=orchestrator_agent,
+        agent=agent,
         app_name=APP_NAME,
         session_service=session_service,
     )
@@ -164,15 +173,13 @@ async def run_with_adk(strategy: str, character_id: str, messages: list[str]) ->
         user_id="poc_user",
     )
 
-    # Build the task prompt
     task_prompt = (
-        f"Run a Character AI automation batch using strategy='{strategy}'.\n"
         f"character_id: {character_id}\n"
         f"messages (in order):\n"
         + "\n".join(f"  {i+1}. {msg}" for i, msg in enumerate(messages))
     )
 
-    logger.info("Sending task to orchestrator agent …")
+    logger.info("Sending task to %s …", agent.name)
     logger.debug("Task prompt:\n%s", task_prompt)
 
     content = types.Content(
@@ -190,7 +197,7 @@ async def run_with_adk(strategy: str, character_id: str, messages: list[str]) ->
             final_response = event.content.parts[0].text if event.content else ""
 
     print("\n" + "=" * 70)
-    print("  ORCHESTRATOR REPORT")
+    print(f"  {agent.name.upper()} REPORT")
     print("=" * 70)
     print(final_response)
     print("=" * 70 + "\n")

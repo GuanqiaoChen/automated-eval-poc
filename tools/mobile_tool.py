@@ -26,7 +26,7 @@ import time
 from typing import Any
 
 from appium import webdriver as appium_driver
-from appium.options import UiAutomator2Options
+from appium.options.android.uiautomator2.base import UiAutomator2Options
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -45,25 +45,27 @@ logger = logging.getLogger(__name__)
 # Adjust if the app is updated.
 
 _LOC = {
-    # Home screen
+    # Home screen — React Native app uses accessibility labels, not resource-ids
     "search_fab":       (AppiumBy.ACCESSIBILITY_ID, "Search"),
-    "search_input":     (AppiumBy.ID, "com.character.ai:id/search_input"),
+    "search_input":     (AppiumBy.XPATH, '//android.widget.EditText'),
 
     # Character profile / chat list
     "start_chat_btn":   (AppiumBy.ACCESSIBILITY_ID, "Start chatting"),
     "chat_item":        (AppiumBy.XPATH,
-                         '//android.widget.TextView[@resource-id="com.character.ai:id/character_name"]'),
+                         '//android.view.ViewGroup[@content-desc]'),
 
-    # Active chat
-    "msg_input":        (AppiumBy.ID, "com.character.ai:id/message_input"),
-    "send_btn":         (AppiumBy.ID, "com.character.ai:id/send_button"),
-    "msg_list":         (AppiumBy.ID, "com.character.ai:id/messages_recycler_view"),
-    # Last AI message bubble (XPath — scroll to bottom first)
+    # Active chat — EditText is the message input in React Native
+    "msg_input":        (AppiumBy.XPATH, '//android.widget.EditText'),
+    "send_btn":         (AppiumBy.XPATH,
+                         '//*[@content-desc="Send" or @content-desc="Send message"'
+                         ' or @content-desc="send" or @content-desc="submit"]'),
+    "msg_list":         (AppiumBy.XPATH, '//*[@scrollable="true"]'),
+    # Last non-empty TextView that isn't the input itself
     "last_ai_msg":      (AppiumBy.XPATH,
-                         '(//android.widget.TextView[@resource-id="com.character.ai:id/message_text"'
-                         ' and @index > 0])[last()]'),
-    # Typing indicator shown while character is responding
-    "typing_indicator": (AppiumBy.ID, "com.character.ai:id/typing_indicator"),
+                         '(//android.widget.TextView[string-length(@text) > 0])[last()]'),
+    # Typing indicator (accessibility label may vary)
+    "typing_indicator": (AppiumBy.XPATH,
+                         '//*[contains(@content-desc,"typing") or contains(@content-desc,"Typing")]'),
 }
 
 
@@ -113,18 +115,30 @@ _MOBILE_SESSIONS: dict[str, MobileSession] = {}
 
 # -- Navigation helpers -------------------------------------------------------
 
+
+def dump_ui(session: MobileSession) -> None:
+    """Print all visible element resource-ids and text — useful for finding real locators."""
+    source = session.driver.page_source
+    import re
+    ids = re.findall(r'resource-id="([^"]+)"', source)
+    texts = re.findall(r'text="([^"]{1,40})"', source)
+    logger.info("=== UI DUMP resource-ids ===\n%s", "\n".join(sorted(set(ids))))
+    logger.info("=== UI DUMP texts ===\n%s", "\n".join(t for t in texts if t))
+
+
 def _navigate_to_character(session: MobileSession, character_id: str) -> None:
     """
-    Deep-link directly into the character's chat using an intent URL.
-    CAI registers a deep link scheme:  characterai://chat/<character_id>
+    Deep-link directly into the character's chat.
+    Tries HTTPS app link first, then falls back to home screen navigation.
     """
-    deep_link = f"characterai://chat/{character_id}"
+    deep_link = f"https://character.ai/chat/{character_id}"
     try:
         session.driver.execute_script(
             "mobile: deepLink",
             {"url": deep_link, "package": appium_config.app_package},
         )
         logger.debug("Deep-linked to %s", deep_link)
+        time.sleep(2)
         # Wait for message input to appear (chat screen loaded)
         session.wait_for(_LOC["msg_input"], timeout=15)
     except Exception as exc:
@@ -136,6 +150,7 @@ def _navigate_via_home(session: MobileSession, character_id: str) -> None:
     """Fallback navigation: open the search and find the character by id."""
     session.driver.activate_app(appium_config.app_package)
     time.sleep(2)
+    dump_ui(session)  # log actual element IDs to help fix locators
 
     search = session.wait_for(_LOC["search_fab"])
     search.click()
@@ -255,8 +270,12 @@ def send_message_mobile(character_id: str, message: str) -> dict[str, Any]:
         msg_input.clear()
         msg_input.send_keys(message)
 
-        send_btn = session.driver.find_element(*_LOC["send_btn"])
-        send_btn.click()
+        # Try send button first; fall back to Enter key (more reliable on React Native)
+        try:
+            send_btn = session.wait_for(_LOC["send_btn"], timeout=3)
+            send_btn.click()
+        except Exception:
+            msg_input.send_keys("\n")
 
         response_text = _wait_for_typing_done(session, prev_count, timeout=60)
         latency_ms = (time.monotonic() - t0) * 1000

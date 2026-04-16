@@ -62,8 +62,8 @@ class AppiumConfig:
     device_name: str = field(
         default_factory=lambda: os.getenv("APPIUM_DEVICE_NAME", "emulator-5554")
     )
-    app_package: str = "com.character.ai"
-    app_activity: str = "com.character.ai.MainActivity"
+    app_package: str = "ai.character.app"
+    app_activity: str = "ai.character.app.MainActivityDefault"
     automation_name: str = "UiAutomator2"
     implicit_wait: int = 10     # seconds
     new_command_timeout: int = 300
