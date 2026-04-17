@@ -219,7 +219,7 @@ def main() -> None:
     if not cai_config.token and args.strategy != "mobile":
         logger.warning(
             "CAI_TOKEN is not set. API and web strategies require a valid token.\n"
-            "See README.md → 'Getting your Character AI token'."
+            "See README.md -> 'Getting your Character AI token'."
         )
 
     if args.no_adk:
